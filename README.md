@@ -47,6 +47,8 @@ python3 미세먼지계산기.py
 - 기상청 ASOS API 연동으로 온도, 습도, 풍속 자동 수집
 - 수동 입력 방식에서 완전 자동화로 전환
 
+## 배포
+🌐 실시간 웹사이트: https://web-production-2cdde.up.railway.app
 
 ## 앞으로 추가할 기능
 - 논문 및 실제 연구 기반 가중치 개선
