@@ -1,11 +1,16 @@
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+API_KEY = os.getenv('API_KEY')
+KMA_KEY = os.getenv('KMA_KEY')
+
 from flask import Flask, render_template
 import requests
 from datetime import datetime
 
 app = Flask(__name__)
-
-API_KEY= "03a15862d5fe0c62847dd26dfac66a2a4f1d3c8b2463a2165cde1f83ea06b03e"
-KMA_KEY = "z1NZ07X0T-aTWdO19A_mig"
 
 @app.route('/')
 def index():
