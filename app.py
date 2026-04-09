@@ -34,7 +34,11 @@ def index():
     PM10 = float(item['pm10Value'])
 
     #기상청 데이터
-    tm = datetime.now().strftime("%Y%m%d%H00")
+    from datetime import datetime
+    import pytz
+
+    한국시간 = datetime.now(pytz.timezone('Asia/Seoul'))
+    tm = 한국시간.strftime("%Y%m%d%H00")
     kma_url = "https://apihub.kma.go.kr/api/typ01/url/kma_sfctm2.php"
     kma_params = {"tm": tm, "stn": "108", "authKey": KMA_KEY}
     kma_response = requests.get(kma_url, params=kma_params)
