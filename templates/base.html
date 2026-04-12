@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}KAirRisk{% endblock %}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Apple SD Gothic Neo', Arial, sans-serif;
+            background: #eef2f7;
+            min-height: 100vh;
+        }
+
+        /* 네비게이션 바 */
+        nav {
+            background: white;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 56px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            gap: 8px;
+        }
+        .nav-logo {
+            font-size: 18px;
+            font-weight: 800;
+            color: #2E75B6;
+            text-decoration: none;
+            letter-spacing: -0.5px;
+            white-space: nowrap;
+        }
+        .nav-logo span {
+            color: #1F3864;
+        }
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            list-style: none;
+            flex-shrink: 0;
+        }
+        .nav-menu a {
+            text-decoration: none;
+            color: #555;
+            font-size: 12px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .nav-menu a:hover {
+            background: #f0f4ff;
+            color: #2E75B6;
+        }
+        .nav-menu a.active {
+            background: #2E75B6;
+            color: white;
+            font-weight: 600;
+        }
+        .nav-station select {
+            padding: 5px 10px;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            font-size: 12px;
+            color: #333;
+            background: #f8f9fb;
+            cursor: pointer;
+            outline: none;
+            white-space: nowrap;
+        }
+        .nav-station select:focus {
+            border-color: #2E75B6;
+        }
+
+        /* 페이지 컨텐츠 영역 */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 20px;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/" class="nav-logo">KAir<span>Risk</span></a>
+
+    <ul class="nav-menu">
+        <li><a href="/" class="{{ 'active' if active_page == 'index' }}">대시보드</a></li>
+        <li><a href="/risk" class="{{ 'active' if active_page == 'risk' }}">미세먼지 위험도</a></li>
+        <li><a href="/today" class="{{ 'active' if active_page == 'today' }}">오늘의 위험</a></li>
+        <li><a href="/pollutants" class="{{ 'active' if active_page == 'pollutants' }}">오염물질</a></li>
+        <li><a href="/guide" class="{{ 'active' if active_page == 'guide' }}">건강 가이드</a></li>
+        <li><a href="/about" class="{{ 'active' if active_page == 'about' }}">계산방식</a></li>
+    </ul>
+
+    <div class="nav-station">
+        <select onchange="location.href='?station='+this.value">
+            {% for s in stations %}
+            <option value="{{ s }}" {{ 'selected' if s == current_station }}>{{ s }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</nav>
+
+{% block content %}{% endblock %}
+
+</body>
+</html>

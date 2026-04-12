@@ -1,0 +1,340 @@
+{% extends 'base.html' %}
+{% block title %}KAirRisk — 미세먼지 위험도{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="page-header">
+        <h2>미세먼지 위험도</h2>
+        <div class="time">{{ now_str }}</div>
+    </div>
+
+    <!-- 기본 등급 (네이버형) -->
+    <div class="card">
+        <div class="card-title">기본 대기질 등급</div>
+        <div class="grade-grid">
+            <div class="grade-item">
+                <div class="grade-label">초미세먼지 PM2.5</div>
+                <div class="grade-value grade-{{ pm25_grade }}">
+                    {{ {'1':'좋음','2':'보통','3':'나쁨','4':'매우나쁨'}.get(pm25_grade, '-') }}
+                </div>
+                <div class="grade-num">{{ PM25 }} µg/m³</div>
+            </div>
+            <div class="grade-item">
+                <div class="grade-label">미세먼지 PM10</div>
+                <div class="grade-value grade-{{ pm10_grade }}">
+                    {{ {'1':'좋음','2':'보통','3':'나쁨','4':'매우나쁨'}.get(pm10_grade, '-') }}
+                </div>
+                <div class="grade-num">{{ PM10 }} µg/m³</div>
+            </div>
+            <div class="grade-item">
+                <div class="grade-label">오존 O3</div>
+                <div class="grade-value grade-{{ o3_grade }}">
+                    {{ {'1':'좋음','2':'보통','3':'나쁨','4':'매우나쁨'}.get(o3_grade, '-') }}
+                </div>
+            </div>
+            <div class="grade-item">
+                <div class="grade-label">이산화질소 NO2</div>
+                <div class="grade-value grade-{{ no2_grade }}">
+                    {{ {'1':'좋음','2':'보통','3':'나쁨','4':'매우나쁨'}.get(no2_grade, '-') }}
+                </div>
+            </div>
+            <div class="grade-item">
+                <div class="grade-label">일산화탄소 CO</div>
+                <div class="grade-value grade-{{ co_grade }}">
+                    {{ {'1':'좋음','2':'보통','3':'나쁨','4':'매우나쁨'}.get(co_grade, '-') }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 체감 위험도 -->
+    <div class="card">
+        <div class="card-title">체감 위험도</div>
+        <div class="risk-box grade-bg-{{ 
+            '4' if 위험도 >= 80 else
+            '3' if 위험도 >= 60 else
+            '2' if 위험도 >= 40 else '1' }}">
+            <div class="risk-emoji">
+                {{ '😷' if 위험도 >= 80 else '😰' if 위험도 >= 60 else '😐' if 위험도 >= 40 else '😊' }}
+            </div>
+            <div class="risk-grade">{{ 등급 }}</div>
+            <div class="risk-score">{{ 위험도 }} / 100점</div>
+        </div>
+
+        <!-- 계절 배지 -->
+        <div class="season-badge">
+            {{ SEASON_KR[season] }} ({{ SEASON_MONTH[season] }}) 가중치 적용 중
+        </div>
+        <div class="season-note">
+            {{ {
+                'spring': '봄철: 풍속 영향 가장 큼 (황사 시즌)',
+                'summer': '여름철: 습도·강수 영향 반영',
+                'fall':   '가을철: 기온 영향 가장 큼',
+                'winter': '겨울철: 습도·기온 방향 반전 (역전층 효과)'
+            }[season] }}
+        </div>
+
+        <!-- 인자별 기여도 -->
+        <div class="factors">
+            <div class="factor-title">인자별 기여도</div>
+            {% for name, key in [('PM2.5','pm25'),('PM10','pm10'),('풍속','wind'),('온도','temp'),('습도','humid')] %}
+            <div class="factor-row">
+                <div class="factor-name">{{ name }}</div>
+                <div class="factor-bar-wrap">
+                    <div class="factor-bar" style="width:{{ details[key]['weight'] }}%"></div>
+                </div>
+                <div class="factor-pct">{{ details[key]['weight'] }}%</div>
+                <div class="factor-score">{{ details[key]['score'] }}점</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 행동 추천 -->
+    <div class="card">
+        <div class="card-title">행동 추천</div>
+
+        <!-- 민감군 토글 -->
+        <div class="toggle-wrap">
+            <button class="toggle-btn active" id="btn-normal" onclick="showGroup('normal')">일반인</button>
+            <button class="toggle-btn" id="btn-sensitive" onclick="showGroup('sensitive')">민감군</button>
+        </div>
+
+        <div id="group-normal">
+            {% if 위험도 >= 80 %}
+            <ul class="tips">
+                <li>🚫 외출을 완전히 금지하세요</li>
+                <li>🪟 창문을 모두 닫으세요</li>
+                <li>💨 공기청정기를 가동하세요</li>
+                <li>😷 부득이한 외출 시 KF94 마스크 착용</li>
+            </ul>
+            {% elif 위험도 >= 60 %}
+            <ul class="tips">
+                <li>😷 외출 시 KF94 마스크 착용</li>
+                <li>🪟 환기를 자제하세요</li>
+                <li>🏃 격렬한 야외운동을 피하세요</li>
+            </ul>
+            {% elif 위험도 >= 40 %}
+            <ul class="tips">
+                <li>⏱️ 장시간 야외활동을 자제하세요</li>
+                <li>😷 민감한 분은 마스크 착용 권고</li>
+            </ul>
+            {% else %}
+            <ul class="tips">
+                <li>✅ 야외활동이 가능합니다</li>
+                <li>🪟 환기를 추천합니다</li>
+                <li>🏃 가벼운 운동도 괜찮아요</li>
+            </ul>
+            {% endif %}
+        </div>
+
+        <div id="group-sensitive" style="display:none">
+            {% if 위험도 >= 80 %}
+            <ul class="tips">
+                <li>🚨 즉시 실내로 대피하세요</li>
+                <li>💊 흡입기를 상시 휴대하세요</li>
+                <li>🏥 증상 악화 시 즉시 병원 방문</li>
+            </ul>
+            {% elif 위험도 >= 60 %}
+            <ul class="tips">
+                <li>🏠 외출을 자제하세요</li>
+                <li>💊 흡입기 등 상비약 준비</li>
+                <li>🏥 증상 악화 시 병원 방문</li>
+            </ul>
+            {% elif 위험도 >= 40 %}
+            <ul class="tips">
+                <li>😷 마스크 착용을 권고합니다</li>
+                <li>🏃 무리한 운동을 자제하세요</li>
+                <li>📋 증상을 모니터링하세요</li>
+            </ul>
+            {% else %}
+            <ul class="tips">
+                <li>✅ 가벼운 야외활동이 가능합니다</li>
+                <li>📋 증상을 꾸준히 모니터링하세요</li>
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 측정값 -->
+    <div class="card">
+        <div class="card-title">현재 측정값</div>
+        <div class="measures">
+            <div class="measure-item">
+                <div class="val">{{ PM25 }}</div>
+                <div class="lbl">PM2.5 (µg/m³)</div>
+            </div>
+            <div class="measure-item">
+                <div class="val">{{ PM10 }}</div>
+                <div class="lbl">PM10 (µg/m³)</div>
+            </div>
+            <div class="measure-item">
+                <div class="val">{{ 온도 }}°</div>
+                <div class="lbl">온도 (℃)</div>
+            </div>
+            <div class="measure-item">
+                <div class="val">{{ 습도 }}%</div>
+                <div class="lbl">습도</div>
+            </div>
+            <div class="measure-item">
+                <div class="val">{{ 풍속 }}</div>
+                <div class="lbl">풍속 (m/s)</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+.page-header { margin-bottom: 24px; }
+.page-header h2 { font-size: 24px; font-weight: 700; color: #1F3864; }
+.page-header .time { font-size: 12px; color: #aaa; margin-top: 4px; }
+
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1F3864;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eef2f7;
+}
+
+/* 기본 등급 */
+.grade-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+}
+.grade-item { text-align: center; }
+.grade-label { font-size: 11px; color: #888; margin-bottom: 6px; }
+.grade-value {
+    font-size: 16px;
+    font-weight: 700;
+    padding: 6px 0;
+    border-radius: 8px;
+    margin-bottom: 4px;
+}
+.grade-num { font-size: 11px; color: #aaa; }
+.grade-1 { color: #27ae60; background: #eafaf1; }
+.grade-2 { color: #f39c12; background: #fef9e7; }
+.grade-3 { color: #e74c3c; background: #fdedec; }
+.grade-4 { color: #8e44ad; background: #f5eef8; }
+
+/* 체감 위험도 */
+.risk-box {
+    text-align: center;
+    padding: 24px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+.risk-emoji { font-size: 48px; }
+.risk-grade { font-size: 28px; font-weight: 800; margin: 8px 0 4px; }
+.risk-score { font-size: 16px; color: #666; }
+.grade-bg-1 { background: #eafaf1; color: #27ae60; }
+.grade-bg-2 { background: #fef9e7; color: #f39c12; }
+.grade-bg-3 { background: #fdedec; color: #e74c3c; }
+.grade-bg-4 { background: #f5eef8; color: #8e44ad; }
+
+.season-badge {
+    display: inline-block;
+    background: #f0f4ff;
+    color: #4a6cf7;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+.season-note { font-size: 11px; color: #aaa; margin-bottom: 16px; }
+
+/* 인자별 기여도 */
+.factors { margin-top: 16px; }
+.factor-title {
+    font-size: 12px;
+    color: #888;
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.factor-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.factor-name { font-size: 12px; color: #555; width: 52px; flex-shrink: 0; }
+.factor-bar-wrap {
+    flex: 1;
+    background: #eee;
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+}
+.factor-bar { height: 100%; border-radius: 4px; background: #2E75B6; opacity: 0.75; }
+.factor-pct { font-size: 11px; color: #888; width: 28px; text-align: right; }
+.factor-score { font-size: 11px; color: #aaa; width: 38px; text-align: right; }
+
+/* 민감군 토글 */
+.toggle-wrap { display: flex; gap: 8px; margin-bottom: 16px; }
+.toggle-btn {
+    padding: 8px 20px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    background: white;
+    color: #888;
+    font-size: 13px;
+    cursor: pointer;
+}
+.toggle-btn.active {
+    background: #2E75B6;
+    color: white;
+    border-color: #2E75B6;
+    font-weight: 600;
+}
+
+/* 팁 */
+.tips { list-style: none; }
+.tips li {
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    background: #f8f9fb;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #333;
+}
+
+/* 측정값 */
+.measures {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+}
+.measure-item {
+    background: #f8f9fb;
+    border-radius: 10px;
+    padding: 12px 8px;
+    text-align: center;
+}
+.measure-item .val { font-size: 18px; font-weight: 700; color: #333; }
+.measure-item .lbl { font-size: 10px; color: #999; margin-top: 4px; }
+</style>
+
+<script>
+function showGroup(group) {
+    document.getElementById('group-normal').style.display = group === 'normal' ? 'block' : 'none';
+    document.getElementById('group-sensitive').style.display = group === 'sensitive' ? 'block' : 'none';
+    document.getElementById('btn-normal').classList.toggle('active', group === 'normal');
+    document.getElementById('btn-sensitive').classList.toggle('active', group === 'sensitive');
+}
+</script>
+
+{% endblock %}
