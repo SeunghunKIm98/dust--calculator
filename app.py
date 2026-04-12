@@ -6,7 +6,7 @@ load_dotenv()
 API_KEY = os.getenv('API_KEY')
 KMA_KEY = os.getenv('KMA_KEY')
 
-from flask import Flask
+from flask import Flask, request
 import requests
 from datetime import datetime
 import pytz
@@ -122,28 +122,42 @@ def calc_risk(pm25, pm10, wind, temp, humid):
         'humid': {'score': round(s_humid, 1), 'weight': int(w_humid * 100)},
     }
 
+# 서울 25개 측정소 목록
+STATIONS = [
+    "종로구", "중구", "용산구", "성동구", "광진구",
+    "동대문구", "중랑구", "성북구", "강북구", "도봉구",
+    "노원구", "은평구", "서대문구", "마포구", "양천구",
+    "강서구", "구로구", "금천구", "영등포구", "동작구",
+    "관악구", "서초구", "강남구", "송파구", "강동구"
+]
+
 @app.route('/')
 def index():
-    #에어코리아 데이터
-    url="http://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty"
+    # 사용자가 선택한 측정소 (없으면 기본값 중구)
+    station = request.args.get('station', '중구')
+
+    # 선택한 측정소가 목록에 없으면 중구로 강제
+    if station not in STATIONS:
+        station = '중구'
+
+    # 에어코리아 데이터
+    url = "http://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty"
     params = {
         "serviceKey": API_KEY,
-        "stationName": "중구",
+        "stationName": station,   # ← 여기만 바뀜!
         "dataTerm": "DAILY",
         "pageNo": 1,
         "numOfRows": 1,
         "returnType": "json",
         "ver": "1.0"
-
     }
     response = requests.get(url, params=params)
     data = response.json()
     item = data['response']['body']['items'][0]
-    print(item)
     PM25 = float(item['pm25Value'])
     PM10 = float(item['pm10Value'])
 
-    #기상청 데이터
+    # 기상청 데이터 (기존 그대로)
     kst = pytz.timezone('Asia/Seoul')
     한국시간 = datetime.now(kst)
     tm = 한국시간.strftime("%Y%m%d%H00")
@@ -160,8 +174,7 @@ def index():
             습도 = float(kma_data[13])
             풍속 = float(kma_data[3])
 
-
-    위험도, season, details = calc_risk(PM25,PM10,풍속,온도,습도)
+    위험도, season, details = calc_risk(PM25, PM10, 풍속, 온도, 습도)
 
     grade_map = {
         '매우 위험': ('#c0392b', '😷', '외출 금지'),
@@ -181,17 +194,20 @@ def index():
     color, emoji, advice = grade_map[등급]
     now_str = 한국시간.strftime("%Y년 %m월 %d일 %H시 기준")
 
-    # 계절별 가중치 메모
     season_note = {
         'spring': '봄철: 풍속 영향 가장 큼 (황사 시즌)',
         'summer': '여름철: 습도·강수 영향 반영',
         'fall':   '가을철: 기온 영향 가장 큼',
         'winter': '겨울철: 습도·기온 방향 반전 (역전층 효과)',
     }
-    
-    return f"""
-<!DOCTYPE html>
-<html>
+
+    # 드롭다운 옵션 HTML 생성
+    station_options = ""
+    for s in STATIONS:
+        selected = "selected" if s == station else ""
+        station_options += f'<option value="{s}" {selected}>{s}</option>\n'
+
+    return f"""<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -229,6 +245,31 @@ def index():
             font-size: 12px;
             color: #aaa;
         }}
+        /* 측정소 선택 드롭다운 */
+        .station-select {{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }}
+        .station-select label {{
+            font-size: 13px;
+            color: #666;
+        }}
+        .station-select select {{
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+            font-size: 13px;
+            color: #333;
+            background: #f8f9fb;
+            cursor: pointer;
+            outline: none;
+        }}
+        .station-select select:focus {{
+            border-color: #4a6cf7;
+        }}
         .grade-box {{
             background: {color}18;
             border: 2px solid {color};
@@ -264,8 +305,6 @@ def index():
             font-size: 16px;
             color: #888;
         }}
-
-        /* 측정값 그리드 */
         .measures {{
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -288,11 +327,7 @@ def index():
             color: #999;
             margin-top: 2px;
         }}
-
-        /* 가중치 바 */
-        .weights-section {{
-            margin-bottom: 20px;
-        }}
+        .weights-section {{ margin-bottom: 20px; }}
         .weights-section .section-title {{
             font-size: 12px;
             color: #888;
@@ -340,8 +375,6 @@ def index():
             text-align: right;
             flex-shrink: 0;
         }}
-
-        /* 계절 배지 */
         .season-badge {{
             display: inline-block;
             background: #f0f4ff;
@@ -357,7 +390,6 @@ def index():
             color: #aaa;
             margin-bottom: 20px;
         }}
-
         .footer {{
             text-align: center;
             font-size: 10px;
@@ -371,6 +403,14 @@ def index():
     <div class="header">
         <h1>🌫️ 미세먼지 체감 위험도</h1>
         <div class="time">{now_str}</div>
+    </div>
+
+    <!-- 측정소 선택 드롭다운 -->
+    <div class="station-select">
+        <label>📍 측정소</label>
+        <select onchange="location.href='/?station='+this.value">
+            {station_options}
+        </select>
     </div>
 
     <div class="grade-box">
