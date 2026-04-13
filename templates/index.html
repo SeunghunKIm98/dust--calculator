@@ -3,6 +3,290 @@
 
 {% block content %}
 <div class="container">
-    <p>메인 대시보드 — 준비 중</p>
+
+    <!-- 헤더 -->
+    <div class="dash-header">
+        <div class="dash-location">📍 {{ current_station }}</div>
+        <div class="dash-time">{{ now_str }}</div>
+    </div>
+
+    <!-- 한줄 요약 -->
+    <div class="summary-box">
+        <span class="summary-icon">💬</span>
+        <span class="summary-text">{{ summary }}</span>
+    </div>
+
+    <!-- TOP3 -->
+    <div class="section-title">오늘의 주요 위험 TOP3</div>
+    <div class="top3-grid">
+        {% for i, item in enumerate(top3) %}
+        <a href="/today?pollutant={{ item.name }}&station={{ current_station }}" class="top3-card grade-card-{{ item.grade }}">
+            <div class="top3-rank">{{ i+1 }}위</div>
+            <div class="top3-name">{{ item.name }}</div>
+            <div class="top3-desc">{{ item.desc }}</div>
+            <div class="top3-grade grade-{{ item.grade }}">{{ item.grade_kr }}</div>
+            <div class="top3-value">{{ item.value }}</div>
+            <div class="top3-link">자세히 보기 →</div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- 즐겨찾기 -->
+    <div class="section-title">⭐ 즐겨찾기</div>
+    <div class="favorites-wrap">
+        <div class="favorites" id="favorites"></div>
+        <button class="fav-add" onclick="addFavorite('{{ current_station }}')">
+            + {{ current_station }} 추가
+        </button>
+    </div>
+
+    <!-- 체감 위험도 요약 -->
+    <div class="section-title">체감 위험도</div>
+    <a href="/risk?station={{ current_station }}" class="risk-summary-card grade-bg-{{
+        '4' if 위험도 >= 80 else
+        '3' if 위험도 >= 60 else
+        '2' if 위험도 >= 40 else '1' }}">
+        <div class="risk-summary-score">{{ 위험도 }}점</div>
+        <div class="risk-summary-label">
+            {{ '매우 위험' if 위험도 >= 80 else '나쁨' if 위험도 >= 60 else '보통' if 위험도 >= 40 else '좋음' }}
+        </div>
+        <div class="risk-summary-link">상세 보기 →</div>
+    </a>
+
 </div>
+
+<style>
+.dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.dash-location {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1F3864;
+}
+.dash-time {
+    font-size: 12px;
+    color: #aaa;
+}
+
+/* 한줄 요약 */
+.summary-box {
+    background: white;
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 28px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-left: 4px solid #2E75B6;
+}
+.summary-icon { font-size: 24px; }
+.summary-text {
+    font-size: 15px;
+    color: #333;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+/* 섹션 타이틀 */
+.section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1F3864;
+    margin-bottom: 14px;
+}
+
+/* TOP3 카드 */
+.top3-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+}
+.top3-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-top: 4px solid #ddd;
+}
+.top3-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+}
+.grade-card-1 { border-top-color: #27ae60; }
+.grade-card-2 { border-top-color: #f39c12; }
+.grade-card-3 { border-top-color: #e74c3c; }
+.grade-card-4 { border-top-color: #8e44ad; }
+
+.top3-rank {
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 8px;
+}
+.top3-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1F3864;
+    margin-bottom: 4px;
+}
+.top3-desc {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 12px;
+}
+.top3-grade {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+.top3-value {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 16px;
+}
+.top3-link {
+    font-size: 12px;
+    color: #2E75B6;
+    font-weight: 600;
+}
+
+/* 등급 색상 */
+.grade-1 { color: #27ae60; }
+.grade-2 { color: #f39c12; }
+.grade-3 { color: #e74c3c; }
+.grade-4 { color: #8e44ad; }
+.grade-- { color: #aaa; }
+
+/* 즐겨찾기 */
+.favorites-wrap {
+    background: white;
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 32px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.favorites {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+    min-height: 36px;
+}
+.fav-tag {
+    background: #f0f4ff;
+    color: #2E75B6;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.fav-tag:hover { background: #2E75B6; color: white; }
+.fav-remove {
+    font-size: 11px;
+    opacity: 0.6;
+    margin-left: 2px;
+}
+.fav-add {
+    background: none;
+    border: 1px dashed #ccc;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+    color: #aaa;
+    cursor: pointer;
+}
+.fav-add:hover { border-color: #2E75B6; color: #2E75B6; }
+.fav-empty {
+    font-size: 13px;
+    color: #ccc;
+}
+
+/* 체감 위험도 요약 */
+.risk-summary-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: white;
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 32px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s;
+}
+.risk-summary-card:hover { transform: translateY(-2px); }
+.risk-summary-score {
+    font-size: 36px;
+    font-weight: 800;
+}
+.risk-summary-label {
+    font-size: 18px;
+    font-weight: 600;
+    flex: 1;
+}
+.risk-summary-link {
+    font-size: 13px;
+    color: #2E75B6;
+    font-weight: 600;
+}
+.grade-bg-1 { color: #27ae60; }
+.grade-bg-2 { color: #f39c12; }
+.grade-bg-3 { color: #e74c3c; }
+.grade-bg-4 { color: #8e44ad; }
+</style>
+
+<script>
+// 즐겨찾기 (localStorage)
+function loadFavorites() {
+    const favs = JSON.parse(localStorage.getItem('kairrisk_favs') || '[]');
+    const container = document.getElementById('favorites');
+    container.innerHTML = '';
+    if (favs.length === 0) {
+        container.innerHTML = '<span class="fav-empty">즐겨찾기를 추가해보세요</span>';
+        return;
+    }
+    favs.forEach(name => {
+        const tag = document.createElement('a');
+        tag.href = '/?station=' + name;
+        tag.className = 'fav-tag';
+        tag.innerHTML = name + '<span class="fav-remove" onclick="removeFavorite(event,\'' + name + '\')">✕</span>';
+        container.appendChild(tag);
+    });
+}
+
+function addFavorite(name) {
+    const favs = JSON.parse(localStorage.getItem('kairrisk_favs') || '[]');
+    if (!favs.includes(name)) {
+        favs.push(name);
+        localStorage.setItem('kairrisk_favs', JSON.stringify(favs));
+    }
+    loadFavorites();
+}
+
+function removeFavorite(e, name) {
+    e.preventDefault();
+    const favs = JSON.parse(localStorage.getItem('kairrisk_favs') || '[]');
+    const updated = favs.filter(f => f !== name);
+    localStorage.setItem('kairrisk_favs', JSON.stringify(updated));
+    loadFavorites();
+}
+
+loadFavorites();
+</script>
+
 {% endblock %}

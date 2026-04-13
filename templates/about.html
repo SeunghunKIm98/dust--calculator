@@ -1,8 +1,378 @@
 {% extends 'base.html' %}
-{% block title %}KAirRisk — 대시보드{% endblock %}
+{% block title %}KAirRisk — About{% endblock %}
 
 {% block content %}
 <div class="container">
-    <p>메인 대시보드 — 준비 중</p>
+
+    <!-- KAirRisk 소개 -->
+    <div class="about-hero">
+        <div class="hero-logo">KAir<span>Risk</span></div>
+        <div class="hero-sub">서울 실시간 대기질 위험도 분석 플랫폼</div>
+        <p class="hero-desc">
+            단순 미세먼지 수치 제공을 넘어, 기상 조건과 계절 특성을 반영한
+            체감 위험도를 분석합니다. 논문 기반 가중치와 환경부 CAI 공식을 적용해
+            더 정확한 대기질 정보를 제공합니다.
+        </p>
+    </div>
+
+    <!-- 기존 서비스와 차별점 -->
+    <div class="section-title">기존 서비스와 차별점</div>
+    <div class="diff-grid">
+        <div class="diff-card diff-old">
+            <div class="diff-label">기존 서비스</div>
+            <ul class="diff-list">
+                <li>PM2.5, PM10 수치만 제공</li>
+                <li>단순 등급 표시 (좋음/보통/나쁨)</li>
+                <li>계절별 차이 미반영</li>
+                <li>기상 조건 미반영</li>
+            </ul>
+        </div>
+        <div class="diff-arrow">→</div>
+        <div class="diff-card diff-new">
+            <div class="diff-label">KAirRisk</div>
+            <ul class="diff-list">
+                <li>PM2.5, PM10 + 기온, 습도, 풍속 종합</li>
+                <li>체감 위험도 점수 (0~100점)</li>
+                <li>계절별 가중치 자동 적용</li>
+                <li>논문 기반 과학적 근거</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 계산 방식 -->
+    <div class="section-title">계산 방식</div>
+
+    <div class="card">
+        <div class="card-title">① PM 정규화 — 환경부 CAI 비선형 공식</div>
+        <p class="card-desc">
+            단순 나누기가 아닌 환경부 통합대기환경지수(CAI) 구간별 비선형 공식을 적용합니다.
+            PM2.5 36µg/m³는 나쁨 구간의 시작점으로, 기존 단순 계산(48점)보다
+            CAI 기준(23점)이 훨씬 정확합니다.
+        </p>
+        <div class="formula-box">
+            Ip = (IHI - ILO) / (BPHI - BPLO) × (Cp - BPLO) + ILO
+        </div>
+        <div class="criteria-grid">
+            <div class="criteria-head">
+                <span>등급</span>
+                <span>PM2.5 농도</span>
+                <span>CAI 범위</span>
+            </div>
+            {% for row in [
+                ('🟢 좋음', '0 ~ 15 µg/m³', '0 ~ 50'),
+                ('🟡 보통', '16 ~ 35 µg/m³', '51 ~ 100'),
+                ('🟠 나쁨', '36 ~ 75 µg/m³', '101 ~ 250'),
+                ('🔴 매우나쁨', '76 µg/m³ ~', '251 ~ 500'),
+            ] %}
+            <div class="criteria-row-about">
+                <span>{{ row[0] }}</span>
+                <span>{{ row[1] }}</span>
+                <span>{{ row[2] }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">② 계절별 가중치 — 논문 기반</div>
+        <p class="card-desc">
+            조우싱(2014) <em>서울시 기상인자와 미세먼지의 통계학적 특성분석</em> 논문의
+            계절별 피어슨 상관계수(Table 4.5~4.8)를 기반으로 가중치를 산출했습니다.
+        </p>
+        <div class="weight-table">
+            <div class="weight-head">
+                <span>인자</span>
+                <span>봄</span>
+                <span>여름</span>
+                <span>가을</span>
+                <span>겨울</span>
+            </div>
+            {% for row in [
+                ('PM2.5', '38%', '38%', '38%', '38%'),
+                ('PM10',  '22%', '22%', '22%', '22%'),
+                ('풍속',  '27%', '17%', '13%',  '5%'),
+                ('온도',   '8%',  '7%', '18%', '17%'),
+                ('습도',   '5%', '16%',  '9%', '18%'),
+            ] %}
+            <div class="weight-row-about">
+                <span class="weight-name">{{ row[0] }}</span>
+                <span>{{ row[1] }}</span>
+                <span>{{ row[2] }}</span>
+                <span>{{ row[3] }}</span>
+                <span>{{ row[4] }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        <p class="card-note">
+            ※ 겨울철 기온·습도는 양의 상관관계(역전층 효과)로 방향이 반전됩니다.
+        </p>
+    </div>
+
+    <div class="card">
+        <div class="card-title">③ 기상인자 정규화</div>
+        <div class="normalize-grid">
+            <div class="normalize-item">
+                <div class="normalize-name">풍속</div>
+                <div class="normalize-formula">(1 - 풍속 / 10) × 100</div>
+                <div class="normalize-desc">낮을수록 위험 — 전 계절 동일</div>
+            </div>
+            <div class="normalize-item">
+                <div class="normalize-name">온도</div>
+                <div class="normalize-formula">봄·여름·가을: 추울수록 위험<br>겨울: 따뜻할수록 위험</div>
+                <div class="normalize-desc">역전층 효과 반영</div>
+            </div>
+            <div class="normalize-item">
+                <div class="normalize-name">습도</div>
+                <div class="normalize-formula">봄·여름·가을: 50% 이탈할수록 위험<br>겨울: 습할수록 위험</div>
+                <div class="normalize-desc">역전층 효과 반영</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 데이터 출처 -->
+    <div class="section-title">데이터 출처</div>
+    <div class="source-grid">
+        <div class="source-card">
+            <div class="source-icon">🏭</div>
+            <div class="source-name">에어코리아 OpenAPI</div>
+            <div class="source-desc">PM2.5, PM10, O3, NO2, CO 실시간 수집</div>
+            <div class="source-org">한국환경공단</div>
+        </div>
+        <div class="source-card">
+            <div class="source-icon">🌤️</div>
+            <div class="source-name">기상청 ASOS API</div>
+            <div class="source-desc">온도, 습도, 풍속 실시간 수집</div>
+            <div class="source-org">기상청 기상자료개방포털</div>
+        </div>
+        <div class="source-card">
+            <div class="source-icon">📄</div>
+            <div class="source-name">조우싱 (2014)</div>
+            <div class="source-desc">서울시 기상인자와 미세먼지의 통계학적 특성분석</div>
+            <div class="source-org">서울과학기술대학교 환경공학과</div>
+        </div>
+    </div>
+
 </div>
+
+<style>
+/* 히어로 */
+.about-hero {
+    text-align: center;
+    padding: 48px 20px;
+    margin-bottom: 32px;
+}
+.hero-logo {
+    font-size: 42px;
+    font-weight: 800;
+    color: #2E75B6;
+    margin-bottom: 8px;
+}
+.hero-logo span { color: #1F3864; }
+.hero-sub {
+    font-size: 16px;
+    color: #888;
+    margin-bottom: 16px;
+}
+.hero-desc {
+    font-size: 15px;
+    color: #555;
+    line-height: 1.8;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* 차별점 */
+.section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1F3864;
+    margin-bottom: 16px;
+    margin-top: 8px;
+}
+.diff-grid {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+.diff-card {
+    flex: 1;
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.diff-old { border-top: 4px solid #ddd; }
+.diff-new { border-top: 4px solid #2E75B6; }
+.diff-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: #888;
+    margin-bottom: 12px;
+}
+.diff-new .diff-label { color: #2E75B6; }
+.diff-list { list-style: none; }
+.diff-list li {
+    font-size: 13px;
+    color: #555;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.diff-list li:last-child { border-bottom: none; }
+.diff-arrow {
+    font-size: 28px;
+    color: #2E75B6;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+/* 카드 */
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1F3864;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eef2f7;
+}
+.card-desc {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.7;
+    margin-bottom: 16px;
+}
+.card-note {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 12px;
+}
+
+/* 공식 박스 */
+.formula-box {
+    background: #1F3864;
+    color: white;
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-family: monospace;
+    font-size: 14px;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+/* CAI 기준표 */
+.criteria-grid { border-radius: 10px; overflow: hidden; border: 1px solid #eee; }
+.criteria-head {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    background: #1F3864;
+    color: white;
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.criteria-row-about {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 10px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid #f0f0f0;
+    background: white;
+}
+.criteria-row-about:last-child { border-bottom: none; }
+.criteria-row-about:nth-child(even) { background: #f8f9fb; }
+
+/* 가중치 표 */
+.weight-table { border-radius: 10px; overflow: hidden; border: 1px solid #eee; }
+.weight-head {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr 1fr 1fr;
+    background: #1F3864;
+    color: white;
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.weight-row-about {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr 1fr 1fr;
+    padding: 10px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid #f0f0f0;
+    background: white;
+    text-align: center;
+}
+.weight-row-about:last-child { border-bottom: none; }
+.weight-row-about:nth-child(even) { background: #f8f9fb; }
+.weight-name { text-align: left; font-weight: 600; color: #1F3864; }
+
+/* 정규화 */
+.normalize-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+.normalize-item {
+    background: #f8f9fb;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+}
+.normalize-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1F3864;
+    margin-bottom: 8px;
+}
+.normalize-formula {
+    font-size: 12px;
+    font-family: monospace;
+    color: #2E75B6;
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+.normalize-desc {
+    font-size: 11px;
+    color: #aaa;
+}
+
+/* 데이터 출처 */
+.source-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+}
+.source-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px 20px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.source-icon { font-size: 32px; margin-bottom: 12px; }
+.source-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1F3864;
+    margin-bottom: 8px;
+}
+.source-desc {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+.source-org {
+    font-size: 11px;
+    color: #aaa;
+}
+</style>
+
 {% endblock %}

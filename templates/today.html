@@ -1,8 +1,271 @@
 {% extends 'base.html' %}
-{% block title %}KAirRisk — 대시보드{% endblock %}
+{% block title %}KAirRisk — 오늘의 위험{% endblock %}
 
 {% block content %}
 <div class="container">
-    <p>메인 대시보드 — 준비 중</p>
+
+    <!-- 헤더 -->
+    <div class="dash-header">
+        <div>
+            <div class="page-sub">오늘의 위험 — {{ current_station }}</div>
+            <h2 class="page-title">{{ info.desc }} ({{ info.name }})</h2>
+        </div>
+        <div class="dash-time">{{ now_str }}</div>
+    </div>
+
+    <!-- 현재 수치 -->
+    <div class="card">
+        <div class="card-title">현재 수치</div>
+        <div class="current-wrap">
+            <div class="current-value">{{ current_value }}</div>
+            <div class="current-unit">{{ info.unit }}</div>
+            <div class="current-grade grade-{{ current_grade }}">
+                {{ current_grade_kr }}
+            </div>
+        </div>
+
+        <!-- 기준표 -->
+        <div class="criteria-table">
+            {% for row in info.criteria %}
+            <div class="criteria-row {{ 'highlight' if row.grade == current_grade }}">
+                <div class="criteria-grade grade-{{ row.grade }}">{{ row.label }}</div>
+                <div class="criteria-range">{{ row.range }}</div>
+                <div class="criteria-emoji">{{ row.emoji }}</div>
+                {% if row.grade == current_grade %}
+                <div class="criteria-current">← 현재</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 24시간 그래프 -->
+    <div class="card">
+        <div class="card-title">오늘 24시간 추이</div>
+        <canvas id="trendChart" height="100"></canvas>
+    </div>
+
+    <!-- 건강 영향 (빈칸) -->
+    <div class="card">
+        <div class="card-title">건강 영향</div>
+        <div class="empty-section">
+            <div class="empty-icon">🔬</div>
+            <div class="empty-title">{{ info.desc }} 건강 영향</div>
+            <div class="empty-desc">학술 자료 검토 후 업데이트 예정입니다.</div>
+            <div class="empty-tags">
+                <span class="empty-tag">주의 질환</span>
+                <span class="empty-tag">주의 대상</span>
+                <span class="empty-tag">노출 경로</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 행동 요령 (빈칸) -->
+    <div class="card">
+        <div class="card-title">행동 요령</div>
+        <div class="empty-section">
+            <div class="empty-icon">📋</div>
+            <div class="empty-title">{{ info.desc }} 행동 요령</div>
+            <div class="empty-desc">학술 자료 검토 후 업데이트 예정입니다.</div>
+            <div class="empty-tags">
+                <span class="empty-tag">일반인 행동 요령</span>
+                <span class="empty-tag">민감군 행동 요령</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 다른 오염물질 보기 -->
+    <div class="card">
+        <div class="card-title">다른 오염물질 보기</div>
+        <div class="pollutant-btns">
+            {% for p in ['PM2.5', 'PM10', 'O3', 'NO2', 'CO'] %}
+            <a href="/today?pollutant={{ p }}&station={{ current_station }}"
+               class="p-btn {{ 'active' if p == pollutant }}">{{ p }}</a>
+            {% endfor %}
+        </div>
+    </div>
+
 </div>
+
+<style>
+/* 기준표 */
+.criteria-table {
+    margin-top: 20px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #eee;
+}
+.criteria-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    gap: 16px;
+    border-bottom: 1px solid #f0f0f0;
+    background: white;
+}
+.criteria-row:last-child { border-bottom: none; }
+.criteria-row.highlight {
+    background: #f0f4ff;
+    font-weight: 600;
+}
+.criteria-grade {
+    width: 70px;
+    font-weight: 600;
+    font-size: 14px;
+}
+.criteria-range {
+    flex: 1;
+    font-size: 13px;
+    color: #555;
+}
+.criteria-emoji { font-size: 16px; }
+.criteria-current {
+    font-size: 12px;
+    color: #2E75B6;
+    font-weight: 700;
+}
+.dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+.page-sub { font-size: 12px; color: #aaa; margin-bottom: 4px; }
+.page-title { font-size: 24px; font-weight: 700; color: #1F3864; }
+.dash-time { font-size: 12px; color: #aaa; }
+
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1F3864;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eef2f7;
+}
+
+/* 현재 수치 */
+.current-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+.current-value {
+    font-size: 52px;
+    font-weight: 800;
+    color: #1F3864;
+}
+.current-unit {
+    font-size: 18px;
+    color: #aaa;
+}
+.current-grade {
+    font-size: 24px;
+    font-weight: 700;
+    margin-left: 8px;
+}
+.grade-1 { color: #27ae60; }
+.grade-2 { color: #f39c12; }
+.grade-3 { color: #e74c3c; }
+.grade-4 { color: #8e44ad; }
+.grade-- { color: #aaa; }
+
+/* 빈칸 섹션 */
+.empty-section {
+    text-align: center;
+    padding: 32px 20px;
+    background: #f8f9fb;
+    border-radius: 12px;
+    border: 2px dashed #dde;
+}
+.empty-icon { font-size: 36px; margin-bottom: 12px; }
+.empty-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 8px;
+}
+.empty-desc {
+    font-size: 13px;
+    color: #aaa;
+    margin-bottom: 16px;
+}
+.empty-tags {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.empty-tag {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: #888;
+}
+
+/* 다른 오염물질 버튼 */
+.pollutant-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.p-btn {
+    padding: 8px 20px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    background: white;
+    color: #555;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+.p-btn:hover { background: #f0f4ff; color: #2E75B6; border-color: #2E75B6; }
+.p-btn.active { background: #2E75B6; color: white; border-color: #2E75B6; }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+const ctx = document.getElementById('trendChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: {{ chart_labels | tojson }},
+        datasets: [{
+            label: '{{ info.name }} ({{ info.unit }})',
+            data: {{ chart_values | tojson }},
+            borderColor: '#2E75B6',
+            backgroundColor: 'rgba(46, 117, 182, 0.1)',
+            borderWidth: 2,
+            pointRadius: 3,
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: { color: '#f0f0f0' }
+            },
+            x: {
+                grid: { display: false }
+            }
+        }
+    }
+});
+</script>
+
 {% endblock %}
