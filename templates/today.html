@@ -13,6 +13,17 @@
         <div class="dash-time">{{ now_str }}</div>
     </div>
 
+    <!-- 다른 오염물질 보기 -->
+    <div class="card">
+        <div class="card-title">다른 오염물질 보기</div>
+        <div class="pollutant-btns">
+            {% for p in ['PM2.5', 'PM10', 'O3', 'NO2', 'CO'] %}
+            <a href="/today?pollutant={{ p }}&station={{ current_station }}"
+               class="p-btn {{ 'active' if p == pollutant }}">{{ p }}</a>
+            {% endfor %}
+        </div>
+    </div>
+    
     <!-- 현재 수치 -->
     <div class="card">
         <div class="card-title">현재 수치</div>
@@ -45,49 +56,229 @@
         <canvas id="trendChart" height="100"></canvas>
     </div>
 
-    <!-- 건강 영향 (빈칸) -->
-    <div class="card">
-        <div class="card-title">건강 영향</div>
-        <div class="empty-section">
-            <div class="empty-icon">🔬</div>
-            <div class="empty-title">{{ info.desc }} 건강 영향</div>
-            <div class="empty-desc">학술 자료 검토 후 업데이트 예정입니다.</div>
-            <div class="empty-tags">
-                <span class="empty-tag">주의 질환</span>
-                <span class="empty-tag">주의 대상</span>
-                <span class="empty-tag">노출 경로</span>
-            </div>
+    <!-- 건강 영향 -->
+<div class="card">
+    <div class="card-title">건강 영향</div>
+    {% if info.name == 'PM2.5' %}
+    <div class="health-content">
+        <div class="health-item">
+            <div class="health-label">🫁 주요 질환</div>
+            <div class="health-value">천식, 만성폐쇄성폐질환(COPD), 폐암, 심혈관질환, 비부비동염</div>
+        </div>
+        <div class="health-item">
+            <div class="health-label">⚠️ 주의 대상</div>
+            <div class="health-value">호흡기·심혈관 질환자, 노인, 영유아, 임산부</div>
+        </div>
+        <div class="health-item">
+            <div class="health-label">📋 건강 영향</div>
+            <div class="health-value">폐포까지 침투해 심혈관계 입원 위험을 높입니다. WHO 1군 발암물질로 분류되며, 10µg/m³ 증가 시 전체 사망 위험이 약 0.95% 상승합니다.</div>
+        </div>
+        <div class="health-source">출처: 환경부·질병관리청, WHO, 국립환경과학원 보고서</div>
+    </div>
+    {% elif info.name == 'PM10' %}
+    <div class="health-content">
+        <div class="health-item">
+            <div class="health-label">🫁 주요 질환</div>
+            <div class="health-value">기관지염, 천식 악화, 알레르기성 비염, 심혈관질환</div>
+        </div>
+        <div class="health-item">
+            <div class="health-label">⚠️ 주의 대상</div>
+            <div class="health-value">호흡기 질환자, 알레르기 환자, 노인, 영유아</div>
+        </div>
+        <div class="health-item">
+            <div class="health-label">📋 건강 영향</div>
+            <div class="health-value">코, 목, 기관지 등 상기도에 침적되어 호흡기 질환을 유발합니다. PM2.5보다 크기 때문에 혈류 침투 가능성은 낮지만 폐 조직 손상을 일으킬 수 있습니다.</div>
+        </div>
+        <div class="health-source">출처: 환경부 에어코리아, WHO, 위키백과 입자상물질 항목</div>
+    </div>
+    {% elif info.name == 'O3' %}
+    <div class="health-content">
+        <div class="health-item">
+            <div class="health-label">🫁 주요 질환</div>
+            <div class="health-value">기관지염, 폐기종, 천식 악화, 심혈관질환</div>
+        </div>
+        <div class="health-item">
+            <div class="health-label">⚠️ 주의 대상</div>
+            <div class="health-value">천식·호흡기 질환자, 심장질환자, 어린이, 노약자, 야외 운동하는 사람</div>
+        </div>
+        <div class="health-item">
+            <div class="health-label">📋 건강 영향</div>
+            <div class="health-value">가슴 통증, 기침, 메스꺼움, 호흡곤란을 유발합니다. 오존 농도 상승으로 인한 초과 사망자 수가 2010년 대비 2019년에 2배 이상 증가했습니다. 마스크로는 오존을 막을 수 없습니다.</div>
+        </div>
+        <div class="health-source">출처: 환경부, 질병관리청 기후보건영향평가 보고서(2022), 에어코리아</div>
+    </div>
+    {% elif info.name == 'NO2' %}
+    <div class="health-content">
+        <div class="health-item">
+            <div class="health-label">🫁 주요 질환</div>
+            <div class="health-value">만성 기관지염, 폐렴, 폐출혈, 폐수종, 위장병</div>
+        </div>
+        <div class="health-item">
+            <div class="health-label">⚠️ 주의 대상</div>
+            <div class="health-value">심혈관 질환자, 호흡기 질환자, 임산부</div>
+        </div>
+        <div class="health-item">
+            <div class="health-label">📋 건강 영향</div>
+            <div class="health-value">고농도 노출 시 눈·호흡기 점막 자극, 기침, 현기증, 두통을 유발합니다. 장기 저농도 노출 시에도 만성 기관지염, 폐기종을 일으킬 수 있습니다.</div>
+        </div>
+        <div class="health-source">출처: 환경부 에어코리아, 서울시 대기환경정보</div>
+    </div>
+    {% elif info.name == 'CO' %}
+    <div class="health-content">
+        <div class="health-item">
+            <div class="health-label">🫁 주요 질환</div>
+            <div class="health-value">허혈성 심장질환, 협심증, 신경심리학적 장애, 지연성 뇌 손상</div>
+        </div>
+        <div class="health-item">
+            <div class="health-label">⚠️ 주의 대상</div>
+            <div class="health-value">심장 질환자, 빈혈 환자, 임산부, 태아</div>
+        </div>
+        <div class="health-item">
+            <div class="health-label">📋 건강 영향</div>
+            <div class="health-value">헤모글로빈의 산소 운반 기능을 저하시킵니다. 무색무취라 감지가 어려우며, 두통·메스꺼움·의식 변화를 유발하고 심각한 경우 사망에 이릅니다.</div>
+        </div>
+        <div class="health-source">출처: 질병관리청, 환경부 에어코리아, 미국 EPA</div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- 행동 요령 -->
+<div class="card">
+    <div class="card-title">행동 요령</div>
+    {% if info.name == 'PM2.5' or info.name == 'PM10' %}
+    <div class="action-grid">
+        <div class="action-item">
+            <div class="action-icon">😷</div>
+            <div class="action-text">나쁨 이상 시 KF94 마스크 착용</div>
+        </div>
+        <div class="action-item">
+            <div class="action-icon">🪟</div>
+            <div class="action-text">나쁨 이상 시 환기 자제</div>
+        </div>
+        <div class="action-item">
+            <div class="action-icon">💨</div>
+            <div class="action-text">공기청정기 가동 권장</div>
+        </div>
+        <div class="action-item">
+            <div class="action-icon">🏃</div>
+            <div class="action-text">격렬한 야외운동 자제</div>
+        </div>
+        <div class="action-item">
+            <div class="action-icon">🚿</div>
+            <div class="action-text">외출 후 손·얼굴 세척</div>
+        </div>
+        <div class="action-item">
+            <div class="action-icon">👶</div>
+            <div class="action-text">민감군은 실외 활동 최소화</div>
         </div>
     </div>
-
-    <!-- 행동 요령 (빈칸) -->
-    <div class="card">
-        <div class="card-title">행동 요령</div>
-        <div class="empty-section">
-            <div class="empty-icon">📋</div>
-            <div class="empty-title">{{ info.desc }} 행동 요령</div>
-            <div class="empty-desc">학술 자료 검토 후 업데이트 예정입니다.</div>
-            <div class="empty-tags">
-                <span class="empty-tag">일반인 행동 요령</span>
-                <span class="empty-tag">민감군 행동 요령</span>
-            </div>
+    {% elif info.name == 'O3' %}
+    <div class="action-grid">
+        <div class="action-item">
+            <div class="action-icon">🏠</div>
+            <div class="action-text">오후 2~5시 야외활동 자제 (오존 최고 시간대)</div>
+        </div>
+        <div class="action-item">
+            <div class="action-icon">🚗</div>
+            <div class="action-text">승용차 자제, 대중교통 이용</div>
+        </div>
+        <div class="action-item">
+            <div class="action-icon">🏫</div>
+            <div class="action-text">어린이집·학교 실외학습 자제</div>
+        </div>
+        <div class="action-item">
+            <div class="action-icon">😷</div>
+            <div class="action-text">마스크로는 오존 차단 불가 — 실내 대피가 최선</div>
+        </div>
+        <div class="action-item">
+            <div class="action-icon">🌬️</div>
+            <div class="action-text">오존 경보 발령 시 환기 자제</div>
+        </div>
+        <div class="action-item">
+            <div class="action-icon">📱</div>
+            <div class="action-text">오존 예·경보 수시 확인</div>
         </div>
     </div>
-
-    <!-- 다른 오염물질 보기 -->
-    <div class="card">
-        <div class="card-title">다른 오염물질 보기</div>
-        <div class="pollutant-btns">
-            {% for p in ['PM2.5', 'PM10', 'O3', 'NO2', 'CO'] %}
-            <a href="/today?pollutant={{ p }}&station={{ current_station }}"
-               class="p-btn {{ 'active' if p == pollutant }}">{{ p }}</a>
-            {% endfor %}
+    {% elif info.name == 'NO2' %}
+    <div class="action-grid">
+        <div class="action-item">
+            <div class="action-icon">🚗</div>
+            <div class="action-text">교통량 많은 도로변 노출 최소화</div>
+        </div>
+        <div class="action-item">
+            <div class="action-icon">😷</div>
+            <div class="action-text">고농도 시 마스크 착용</div>
+        </div>
+        <div class="action-item">
+            <div class="action-icon">🏠</div>
+            <div class="action-text">고농도 시 실내 대피 권장</div>
+        </div>
+        <div class="action-item">
+            <div class="action-icon">🤰</div>
+            <div class="action-text">임산부·심혈관 질환자 특별 주의</div>
         </div>
     </div>
-
+    {% elif info.name == 'CO' %}
+    <div class="action-grid">
+        <div class="action-item">
+            <div class="action-icon">🪟</div>
+            <div class="action-text">실내 환기 자주 하기</div>
+        </div>
+        <div class="action-item">
+            <div class="action-icon">🔥</div>
+            <div class="action-text">밀폐 공간에서 연소기구 사용 금지</div>
+        </div>
+        <div class="action-item">
+            <div class="action-icon">🤕</div>
+            <div class="action-text">두통·메스꺼움 시 즉시 신선한 공기로 이동</div>
+        </div>
+        <div class="action-item">
+            <div class="action-icon">🏥</div>
+            <div class="action-text">증상 심각 시 즉시 응급실 방문</div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="health-source" style="margin-top:12px">출처: 환경부 국민 행동요령, 질병관리청, 에어코리아</div>
 </div>
 
 <style>
+/* 건강 영향 */
+.health-content { display: flex; flex-direction: column; gap: 12px; }
+.health-item {
+    background: #f8f9fb;
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+.health-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #2E75B6;
+    margin-bottom: 6px;
+}
+.health-value { font-size: 13px; color: #444; line-height: 1.6; }
+.health-source {
+    font-size: 11px;
+    color: #bbb;
+    margin-top: 10px;
+    text-align: right;
+}
+
+/* 행동 요령 */
+.action-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+.action-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #f8f9fb;
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+.action-icon { font-size: 20px; flex-shrink: 0; }
+.action-text { font-size: 13px; color: #444; line-height: 1.5; }    
 /* 기준표 */
 .criteria-table {
     margin-top: 20px;

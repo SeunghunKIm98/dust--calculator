@@ -1,8 +1,184 @@
 {% extends 'base.html' %}
-{% block title %}KAirRisk — 대시보드{% endblock %}
+{% block title %}KAirRisk — 오염물질{% endblock %}
 
 {% block content %}
 <div class="container">
-    <p>메인 대시보드 — 준비 중</p>
+
+    <!-- 헤더 -->
+    <div class="page-header">
+        <h2 class="page-title">오염물질</h2>
+        <p class="page-desc">서울 실시간 대기 오염물질 수치와 각 물질의 특성을 확인하세요.</p>
+    </div>
+
+    <!-- 실시간 수치 -->
+    <div class="section-title">{{ current_station }} 실시간 수치</div>
+    <div class="pollutant-grid">
+        {% for item in pollutants %}
+        <a href="/today?pollutant={{ item.name }}&station={{ current_station }}"
+           class="pollutant-card grade-card-{{ item.grade }}">
+            <div class="p-header">
+                <div class="p-name">{{ item.name }}</div>
+                <div class="p-grade grade-{{ item.grade }}">{{ item.grade_kr }}</div>
+            </div>
+            <div class="p-desc">{{ item.desc }}</div>
+            <div class="p-value">{{ item.value }} <span class="p-unit">{{ item.unit }}</span></div>
+            <div class="p-link">상세 보기 →</div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- 오염물질 설명 -->
+    <div class="section-title">오염물질 특성</div>
+    {% for item in [
+        ('PM2.5', '초미세먼지', '🔬',
+         '직경 2.5㎛ 이하의 초미세먼지로, 폐 깊숙이 침투해 심장과 폐에 영향을 줍니다. 주로 자동차 배기가스, 공장 매연, 화석연료 연소에서 발생합니다.',
+         '0~15', '16~35', '36~75', '76~', 'µg/m³'),
+        ('PM10', '미세먼지', '💨',
+         '직경 10㎛ 이하의 미세먼지로, 기도에서 일부 걸러지지만 호흡기 질환을 유발합니다. 도로 먼지, 건설 현장, 황사 등이 주요 발생원입니다.',
+         '0~30', '31~80', '81~150', '151~', 'µg/m³'),
+        ('O3', '오존', '☀️',
+         '지표면 오존은 자동차 배기가스와 햇빛의 광화학 반응으로 생성됩니다. 여름철 오후에 농도가 높아지며 호흡기를 자극합니다.',
+         '0~0.03', '0.04~0.09', '0.1~0.15', '0.16~', 'ppm'),
+        ('NO2', '이산화질소', '🏭',
+         '주로 자동차와 공장에서 배출되며 호흡기와 심혈관계에 영향을 줍니다. 다른 오염물질 생성에도 관여합니다.',
+         '0~0.03', '0.04~0.09', '0.1~0.15', '0.16~', 'ppm'),
+        ('CO', '일산화탄소', '⚠️',
+         '불완전 연소 시 발생하는 무색무취의 유독가스입니다. 혈액의 산소 운반 능력을 저하시켜 심장 질환자에게 특히 위험합니다.',
+         '0~2', '3~9', '10~15', '16~', 'ppm'),
+    ] %}
+    <div class="info-card">
+        <div class="info-header">
+            <span class="info-icon">{{ item[2] }}</span>
+            <div>
+                <div class="info-name">{{ item[0] }}</div>
+                <div class="info-desc">{{ item[1] }}</div>
+            </div>
+        </div>
+        <p class="info-text">{{ item[3] }}</p>
+        <div class="info-criteria">
+            <div class="criteria-title">환경부 기준</div>
+            <div class="criteria-row-p">
+                <span class="grade-1">🟢 좋음</span>
+                <span>{{ item[4] }} {{ item[8] }}</span>
+            </div>
+            <div class="criteria-row-p">
+                <span class="grade-2">🟡 보통</span>
+                <span>{{ item[5] }} {{ item[8] }}</span>
+            </div>
+            <div class="criteria-row-p">
+                <span class="grade-3">🟠 나쁨</span>
+                <span>{{ item[6] }} {{ item[8] }}</span>
+            </div>
+            <div class="criteria-row-p">
+                <span class="grade-4">🔴 매우나쁨</span>
+                <span>{{ item[7] }} {{ item[8] }}</span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
 </div>
+
+<style>
+.page-header { margin-bottom: 24px; }
+.page-title { font-size: 24px; font-weight: 700; color: #1F3864; margin-bottom: 6px; }
+.page-desc { font-size: 13px; color: #888; }
+
+.section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1F3864;
+    margin-bottom: 16px;
+    margin-top: 8px;
+}
+
+/* 실시간 수치 그리드 */
+.pollutant-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+}
+.pollutant-card {
+    background: white;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    text-decoration: none;
+    color: inherit;
+    border-top: 4px solid #ddd;
+    transition: transform 0.2s;
+    display: block;
+}
+.pollutant-card:hover { transform: translateY(-3px); }
+.grade-card-1 { border-top-color: #27ae60; }
+.grade-card-2 { border-top-color: #f39c12; }
+.grade-card-3 { border-top-color: #e74c3c; }
+.grade-card-4 { border-top-color: #8e44ad; }
+.grade-card-- { border-top-color: #ddd; }
+
+.p-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+.p-name { font-size: 16px; font-weight: 800; color: #1F3864; }
+.p-grade { font-size: 11px; font-weight: 700; }
+.p-desc { font-size: 10px; color: #aaa; margin-bottom: 10px; }
+.p-value { font-size: 20px; font-weight: 700; color: #333; margin-bottom: 10px; }
+.p-unit { font-size: 11px; color: #aaa; font-weight: 400; }
+.p-link { font-size: 11px; color: #2E75B6; font-weight: 600; }
+
+.grade-1 { color: #27ae60; }
+.grade-2 { color: #f39c12; }
+.grade-3 { color: #e74c3c; }
+.grade-4 { color: #8e44ad; }
+.grade-- { color: #aaa; }
+
+/* 오염물질 설명 카드 */
+.info-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.info-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 12px;
+}
+.info-icon { font-size: 32px; }
+.info-name { font-size: 18px; font-weight: 800; color: #1F3864; }
+.info-desc { font-size: 12px; color: #888; }
+.info-text {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.7;
+    margin-bottom: 16px;
+}
+.info-criteria {
+    background: #f8f9fb;
+    border-radius: 10px;
+    padding: 14px 16px;
+}
+.criteria-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #aaa;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+}
+.criteria-row-p {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 4px 0;
+    color: #555;
+}
+</style>
+
 {% endblock %}

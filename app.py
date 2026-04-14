@@ -397,18 +397,71 @@ def today():
 @app.route('/pollutants')
 def pollutants():
     station = request.args.get('station', '중구')
+    if station not in STATIONS:
+        station = '중구'
+
+    item = get_air_data(station)
+    grade_kr = {'1': '좋음', '2': '보통', '3': '나쁨', '4': '매우나쁨', '-': '-'}
+
+    pollutants_data = [
+        {'name': 'PM2.5', 'desc': '초미세먼지', 'unit': 'µg/m³',
+         'value': item.get('pm25Value', '-'),
+         'grade': item.get('pm25Grade', '-'),
+         'grade_kr': grade_kr.get(item.get('pm25Grade', '-'), '-')},
+        {'name': 'PM10',  'desc': '미세먼지',   'unit': 'µg/m³',
+         'value': item.get('pm10Value', '-'),
+         'grade': item.get('pm10Grade', '-'),
+         'grade_kr': grade_kr.get(item.get('pm10Grade', '-'), '-')},
+        {'name': 'O3',    'desc': '오존',       'unit': 'ppm',
+         'value': item.get('o3Value', '-'),
+         'grade': item.get('o3Grade', '-'),
+         'grade_kr': grade_kr.get(item.get('o3Grade', '-'), '-')},
+        {'name': 'NO2',   'desc': '이산화질소', 'unit': 'ppm',
+         'value': item.get('no2Value', '-'),
+         'grade': item.get('no2Grade', '-'),
+         'grade_kr': grade_kr.get(item.get('no2Grade', '-'), '-')},
+        {'name': 'CO',    'desc': '일산화탄소', 'unit': 'ppm',
+         'value': item.get('coValue', '-'),
+         'grade': item.get('coGrade', '-'),
+         'grade_kr': grade_kr.get(item.get('coGrade', '-'), '-')},
+    ]
+
     return render_template('pollutants.html',
         active_page='pollutants',
         stations=STATIONS,
-        current_station=station
+        current_station=station,
+        pollutants=pollutants_data
     )
 
 @app.route('/guide')
 def guide():
+    station = request.args.get('station', '중구')
+    if station not in STATIONS:
+        station = '중구'
+
+    item = get_air_data(station)
+    grade_kr = {'1': '좋음', '2': '보통', '3': '나쁨', '4': '매우나쁨', '-': '-'}
+
+    # 현재 전체 등급 중 가장 나쁜 등급 계산
+    grades = [
+        item.get('pm25Grade', '1'),
+        item.get('pm10Grade', '1'),
+        item.get('o3Grade', '1'),
+        item.get('no2Grade', '1'),
+        item.get('coGrade', '1'),
+    ]
+    grade_order = {'4': 4, '3': 3, '2': 2, '1': 1, '-': 0}
+    worst_grade = max(grades, key=lambda x: grade_order.get(x, 0))
+
+    _, _, _, 한국시간 = get_weather_data()
+
     return render_template('guide.html',
         active_page='guide',
         stations=STATIONS,
-        current_station='중구'
+        current_station=station,
+        worst_grade=worst_grade,
+        worst_grade_kr=grade_kr.get(worst_grade, '-'),
+        now_str=한국시간.strftime("%Y년 %m월 %d일 %H시 기준")
     )
 
 @app.route('/about')

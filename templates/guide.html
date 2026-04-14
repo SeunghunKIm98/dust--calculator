@@ -1,8 +1,215 @@
 {% extends 'base.html' %}
-{% block title %}KAirRisk — 대시보드{% endblock %}
+{% block title %}KAirRisk — 건강 가이드{% endblock %}
 
 {% block content %}
 <div class="container">
-    <p>메인 대시보드 — 준비 중</p>
+
+    <!-- 헤더 -->
+    <div class="page-header">
+        <h2 class="page-title">건강 가이드</h2>
+        <p class="page-desc">대기질 등급별 행동 요령과 오염물질별 주의 대상을 안내합니다.</p>
+        <div class="current-grade-badge grade-{{ worst_grade }}">
+            현재 {{ current_station }} 최고 등급: {{ worst_grade_kr }}
+        </div>
+    </div>
+
+    <!-- 민감군 토글 -->
+    <div class="toggle-wrap">
+        <button class="toggle-btn active" id="btn-normal" onclick="showGroup('normal')">일반인</button>
+        <button class="toggle-btn" id="btn-sensitive" onclick="showGroup('sensitive')">민감군</button>
+    </div>
+
+    <!-- 등급별 행동 요령 -->
+    <div class="section-title">등급별 행동 요령</div>
+
+    <div id="group-normal">
+        {% for grade in [
+            ('4', '매우 위험', '🔴', '#c0392b', ['외출을 완전히 금지하세요', '창문을 모두 닫으세요', '공기청정기를 가동하세요', '부득이한 외출 시 KF94 마스크 착용', '실내 환기를 하지 마세요']),
+            ('3', '나쁨', '🟠', '#e67e22', ['외출 시 KF94 마스크를 착용하세요', '환기를 자제하세요', '격렬한 야외운동을 피하세요', '외출 후 손발을 깨끗이 씻으세요']),
+            ('2', '보통', '🟡', '#f1c40f', ['장시간 야외활동을 자제하세요', '민감한 분은 마스크 착용 권고', '격렬한 운동은 실내에서 하세요']),
+            ('1', '좋음', '🟢', '#27ae60', ['야외활동이 가능합니다', '환기를 추천합니다', '가벼운 운동도 괜찮아요']),
+        ] %}
+        <div class="guide-card" style="border-top: 4px solid {{ grade[3] }}">
+            <div class="guide-header">
+                <span class="guide-emoji">{{ grade[2] }}</span>
+                <span class="guide-grade" style="color: {{ grade[3] }}">{{ grade[1] }}</span>
+            </div>
+            <ul class="guide-tips">
+                {% for tip in grade[4] %}
+                <li>{{ tip }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div id="group-sensitive" style="display:none">
+        {% for grade in [
+            ('4', '매우 위험', '🔴', '#c0392b', ['즉시 실내로 대피하세요', '흡입기를 상시 휴대하세요', '증상 악화 시 즉시 병원 방문', '응급약을 미리 준비하세요', '창문과 문을 모두 밀폐하세요']),
+            ('3', '나쁨', '🟠', '#e67e22', ['외출을 자제하세요', '흡입기 등 상비약을 준비하세요', '증상 악화 시 병원 방문', '마스크 착용 필수']),
+            ('2', '보통', '🟡', '#f1c40f', ['마스크 착용을 권고합니다', '무리한 운동을 자제하세요', '증상을 꾸준히 모니터링하세요']),
+            ('1', '좋음', '🟢', '#27ae60', ['가벼운 야외활동이 가능합니다', '증상을 꾸준히 모니터링하세요', '정기적인 약 복용을 잊지 마세요']),
+        ] %}
+        <div class="guide-card" style="border-top: 4px solid {{ grade[3] }}">
+            <div class="guide-header">
+                <span class="guide-emoji">{{ grade[2] }}</span>
+                <span class="guide-grade" style="color: {{ grade[3] }}">{{ grade[1] }}</span>
+            </div>
+            <ul class="guide-tips">
+                {% for tip in grade[4] %}
+                <li>{{ tip }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 오염물질별 주의 대상 -->
+    <div class="section-title">오염물질별 주의 대상</div>
+    <div class="pollutant-grid">
+        {% for item in [
+            ('PM2.5', '초미세먼지', '🔬', ['폐암, 폐렴, 천식, COPD', '호흡기 환자, 노인, 영유아']),
+            ('PM10',  '미세먼지',   '💨', ['기관지염, 알레르기성 비염', '호흡기 환자, 알레르기 환자']),
+            ('O3',    '오존',       '☀️', ['천식, 폐기종', '천식 환자, 야외 운동하는 사람']),
+            ('NO2',   '이산화질소', '🏭', ['협심증, 부정맥', '심혈관 환자, 임산부']),
+            ('CO',    '일산화탄소', '⚠️', ['허혈성 심장질환', '심장 질환자, 빈혈 환자']),
+        ] %}
+        <div class="pollutant-card">
+            <div class="pollutant-icon">{{ item[2] }}</div>
+            <div class="pollutant-name">{{ item[0] }}</div>
+            <div class="pollutant-desc">{{ item[1] }}</div>
+            <div class="pollutant-info">
+                <div class="info-row">
+                    <span class="info-label">주의 질환</span>
+                    <span class="info-value">{{ item[3][0] }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">주의 대상</span>
+                    <span class="info-value">{{ item[3][1] }}</span>
+                </div>
+            </div>
+            <div class="pollutant-note">※ 학술 자료 검토 후 상세 내용 업데이트 예정</div>
+        </div>
+        {% endfor %}
+    </div>
+
 </div>
+
+<style>
+.page-header { margin-bottom: 24px; }
+.page-title { font-size: 24px; font-weight: 700; color: #1F3864; margin-bottom: 6px; }
+.page-desc { font-size: 13px; color: #888; }
+.current-grade-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 10px;
+    background: #f8f9fb;
+}
+.current-grade-badge.grade-1 { background: #eafaf1; color: #27ae60; }
+.current-grade-badge.grade-2 { background: #fef9e7; color: #f39c12; }
+.current-grade-badge.grade-3 { background: #fdedec; color: #e74c3c; }
+.current-grade-badge.grade-4 { background: #f5eef8; color: #8e44ad; }
+
+.section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1F3864;
+    margin-bottom: 16px;
+    margin-top: 32px;
+}
+
+/* 토글 */
+.toggle-wrap { display: flex; gap: 8px; margin-bottom: 24px; }
+.toggle-btn {
+    padding: 8px 24px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    background: white;
+    color: #888;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 600;
+}
+.toggle-btn.active {
+    background: #2E75B6;
+    color: white;
+    border-color: #2E75B6;
+}
+
+/* 등급별 카드 */
+.guide-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.guide-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.guide-emoji { font-size: 28px; }
+.guide-grade { font-size: 22px; font-weight: 800; }
+.guide-tips { list-style: none; }
+.guide-tips li {
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    background: #f8f9fb;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #333;
+}
+
+/* 오염물질 그리드 */
+.pollutant-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+}
+.pollutant-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+.pollutant-icon { font-size: 28px; margin-bottom: 8px; }
+.pollutant-name { font-size: 18px; font-weight: 800; color: #1F3864; margin-bottom: 2px; }
+.pollutant-desc { font-size: 12px; color: #888; margin-bottom: 14px; }
+.info-row {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+}
+.info-label {
+    font-size: 10px;
+    color: #aaa;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+.info-value { font-size: 12px; color: #333; line-height: 1.5; }
+.pollutant-note {
+    font-size: 10px;
+    color: #ccc;
+    margin-top: 12px;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 8px;
+}
+</style>
+
+<script>
+function showGroup(group) {
+    document.getElementById('group-normal').style.display = group === 'normal' ? 'block' : 'none';
+    document.getElementById('group-sensitive').style.display = group === 'sensitive' ? 'block' : 'none';
+    document.getElementById('btn-normal').classList.toggle('active', group === 'normal');
+    document.getElementById('btn-sensitive').classList.toggle('active', group === 'sensitive');
+}
+</script>
+
 {% endblock %}
