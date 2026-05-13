@@ -2,7 +2,7 @@
 실시간 API로 수집한 PM2.5, PM10, 온도, 습도, 풍속을 종합해
 **실제 체감 위험도**를 계산하는 웹 애플리케이션입니다.
 
-🌐 **실시간 웹사이트**: https://web-production-2cdde.up.railway.app
+🌐 **실시간 웹사이트**: Render 배포 후 대시보드에 표시되는 `https://<서비스명>.onrender.com` 주소로 접속합니다.
 
 ---
 
@@ -67,9 +67,9 @@ IHI  : 해당 구간 CAI 상한
 
 | 분류 | 내용 |
 |------|------|
-| Language | Python 3.14 |
+| Language | Python 3.12 (`.python-version`, Render와 로컬 동기화) |
 | Framework | Flask |
-| 배포 | Railway |
+| 배포 | [Render](https://render.com) (`render.yaml` 블루프린트) |
 | API 1 | 에어코리아 OpenAPI (PM2.5, PM10) |
 | API 2 | 기상청 ASOS API (온도, 습도, 풍속) |
 | 참고 논문 | 조우싱 (2014), 서울과학기술대학교 환경공학과 |
@@ -81,6 +81,19 @@ IHI  : 해당 구간 CAI 상한
 python3 app.py
 ```
 실행 후 http://127.0.0.1:5000 접속
+
+---
+
+## 배포 (Render)
+
+1. [Render 대시보드](https://dashboard.render.com)에서 **New → Blueprint** 또는 **Web Service**로 GitHub 저장소를 연결합니다.
+2. Blueprint를 쓰는 경우 저장소 루트의 `render.yaml`이 서비스 정의를 담당합니다. Web Service만 만드는 경우 **Start Command**를 다음과 같이 맞춥니다:  
+   `gunicorn app:app --bind 0.0.0.0:$PORT`  
+   (루트 `Procfile`과 동일합니다.)
+3. **Environment**에 `API_KEY`(에어코리아), `KMA_KEY`(기상청 API 허브)를 등록합니다. 로컬의 `.env`와 같은 이름·값입니다.
+4. 첫 배포가 끝나면 서비스 화면의 URL을 복사해 위 README 상단 링크에 반영하면 됩니다.
+
+무료 플랜은 일정 시간 미사용 시 슬립되며, 깨어날 때 첫 응답이 다소 느릴 수 있습니다.
 
 ---
 
@@ -100,6 +113,9 @@ python3 app.py
 - 논문 기반 계절별 가중치 적용 (봄·여름·가을·겨울)
 - 겨울 역전층 효과 반영 (기온·습도 방향 반전)
 - 웹 UI 개선 (계절 배지, 인자별 기여도 바 추가)
+
+### v3.1 (2026-05-13)
+- Railway → Render: `render.yaml` 블루프린트, `Procfile`의 `PORT` 바인딩, `.python-version`으로 Python 3.12 고정
 
 ---
 
